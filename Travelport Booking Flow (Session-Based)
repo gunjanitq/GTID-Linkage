@@ -1,74 +1,80 @@
-Travelport Booking Flow (Session-Based)
+# Travelport Booking Flow (Session-Based)
 
-When working with Travelport APIs (uAPI), creating a booking is a multi-step process, where each request builds upon the previous one using a Session Key (Session Token).
+When working with **Travelport APIs (uAPI)**, creating a booking is a multi-step process, where each request builds upon the previous one using a **Session Key (Session Token).**
 
-Step 1: Start Booking Session
-1.	API: BookingStartReq
-2.	Purpose: Start a session with Travelport for the branch you’re targeting.
-3.	Input: Branch code (PCC), target branch ID.
-4.	Output: Session Key (like a session ID).
-5.	This session key must be carried forward in all subsequent requests.
+---
+### Step 1: Start Booking Session
 
-Step 2. Add Air Segments
+1. API: **BookingStartReq**
+2. Purpose: Start a session with Travelport for the branch you’re targeting.
+3. Input: Branch code (PCC), target branch ID.
+4. Output: Session Key (like a session ID).
+5. This Session Key must be carried forward in all subsequent requests.
+---
+### Step 2: Add Air Segments
 
-1.	API: AirCreateReservationReq (older) or BookingAirSegmentReq
-2.	Purpose: Add flight segments into the PNR.
-3.	Input: Air Segment Key (from AirPriceShop / AirAvailability response)
-4.	Last Line Number
-5.	Party size (number of passengers)
-6.	Output
-7.	Session ID (carried forward, often twice as per your notes)
-8.	Air Segment Reference
+6. API: **AirCreateReservationReq** (older) or **BookingAirSegmentReq**
+7. Purpose: Add flight segments into the PNR.
+8. Input:
 
-Step 3. Add Traveller Information
+   * Air Segment Key (from AirPriceShop / AirAvailability response)
+   * Last Line Number
+   * Party size (number of passengers)
+9. Output:
 
-1.	API: BookingTravelerReq or included in AirCreateReservationReq
-2.	Purpose: Attach passenger details.
-3.	Input: Passenger names
-4.	Date of birth, gender, type (ADT, CHD, INF)
-5.	Note: Each traveler gets a Traveler Key which must be used in pricing and ticketing later.
+   * Session ID (carried forward, often twice as per your notes)
+   * Air Segment Reference
+---
+### Step 3: Add Traveller Information
 
-Step 4. Pricing Request
+10. API: **BookingTravelerReq** or included in **AirCreateReservationReq**
+11. Purpose: Attach passenger details.
+12. Input:
+    * Passenger names
+    * Date of birth, gender, type (ADT, CHD, INF)
+13. Note: Each traveler gets a **Traveler Key** which must be used in pricing and ticketing later.
+---
+### Step 4: Pricing Request
 
-1.	API: AirPriceReq or BookingPricingReq
-2.	Purpose: Get the fare, rules, penalties, and confirm pricing.
-3.	Input:
-4.	Session Key
-5.	Air Segment Keys
-6.	Traveler Keys
-7.	Additional:
-8.	Add Modifiers (e.g., Brand modifiers, Cabin preference, Penalty checks).
-9.	Remove host tokens (temporary data from booking info).
-10.	Output:
-11.	Air Pricing Solution (with fare basis, brand details, taxes, penalties).
-12.	Booking Pricing Reference Key.
+14. API: **AirPriceReq** or **BookingPricingReq**
+15. Purpose: Get the fare, rules, penalties, and confirm pricing.
+16. Input:
+    * Session Key
+    * Air Segment Keys
+    * Traveler Keys
+17. Additional:
+    * Add Modifiers (e.g., Brand modifiers, Cabin preference, Penalty checks).
+    * Remove host tokens (temporary data from booking info).
+18. Output:
+    * Air Pricing Solution (with fare basis, brand details, taxes, penalties)
+    * Booking Pricing Reference Key.
+---
+### Step 5: Review Cancel Penalty (Optional)
 
-Step 5. Review Cancel Penalty (Optional)
+19. Check refund/cancellation policies.
+20. Apply **AirPricingModifiers** (like low-cost carrier rules, branded fares).
+---
+### Step 6: Finalize Reservation
 
-1.	At this point, you can:
-2.	Check refund/cancellation policies.
-3.	Apply AirPricingModifiers (like low-cost carrier rules, branded fares).
+21. Remove unnecessary tokens/keys (like Brand Key if not needed).
+22. Confirm the reservation with all pricing details.
+23. Store PNR → a Locator Code (record locator) is returned.
+---
+### Step 7: Issue Ticket
 
-Step 6. Finalize Reservation
+24. API: **AirTicketingReq**
+25. Input: PNR Locator Code, form of payment (FOP), PCC.
+26. Output: E-ticket number(s).
+---
+### Notes
 
-1.	Remove unnecessary tokens/keys (like Brand Key if not needed).
-2.	Confirm the reservation with all pricing details.
-3.	Store PNR → a Locator Code (record locator) is returned.
-
-Step 7. Issue Ticket
-
-1.	API: AirTicketingReq
-2.	Input: PNR Locator Code, form of payment (FOP), PCC.
-3.	Output: E-ticket number(s).
-
-Notes :
-1.	Session Key is reused multiple times (at least twice).
-2.	Air Segment Key (SegRef) is crucial to connect search results → booking.
-3.	Booking Traveler Key must match PAX types.
-4.	After cancel penalty → add AirPricingModifier.
-5.	Remove after Brand Key → means cleaning up extra XML tags before commit.
-
-End-to-End Flow in Order
+27. Session Key is reused multiple times (at least twice).
+28. Air Segment Key (SegRef) is crucial to connect search results → booking.
+29. Booking Traveler Key must match PAX types.
+30. After cancel penalty → add **AirPricingModifier**.
+31. Remove after Brand Key → means cleaning up extra XML tags before commit.
+---
+### End-to-End Flow in Order
 BookingStartReq      → Get Session Key
 BookingAirSegmentReq → Add flight segments
 BookingTravelerReq   → Add passenger details
